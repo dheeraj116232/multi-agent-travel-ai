@@ -3,7 +3,12 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from config.rate_limiter import RateLimiter, check_rate_limit, rate_limiter, get_rate_limit_info
+from config.rate_limiter import (
+    RateLimiter,
+    check_rate_limit,
+    get_rate_limit_info,
+    reset_rate_limit,
+)
 
 def test_rate_limiter_allows_within_limit():
     limiter = RateLimiter(max_calls=4)
@@ -28,8 +33,10 @@ def test_rate_limiter_different_users():
     assert limiter.get_remaining_calls("user2") == 1
 
 def test_get_rate_limit_info():
-    limiter = RateLimiter(max_calls=4)
-    info = get_rate_limit_info("test_user")
+    user_id = "test_user_info"
+    reset_rate_limit(user_id)
+    check_rate_limit(user_id)
+    info = get_rate_limit_info(user_id)
     assert info["limit"] == 4
     assert info["remaining"] == 3  # One call already made
 

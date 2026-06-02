@@ -1,105 +1,117 @@
 <div align="center">
 
-# ✈️ AI Multi-Agent Travel Planning System
+# AI Multi-Agent Travel Planning System
+
+An AI-powered travel planner that combines a LangGraph agent pipeline with a Streamlit web app to generate flight-aware, hotel-aware, day-by-day travel plans.
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white"/>
-  <img src="https://img.shields.io/badge/LangGraph-Agentic_Framework-FF6B35?style=for-the-badge&logo=langchain&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Groq-LLM_Provider-F55036?style=for-the-badge&logo=groq&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Llama_3.3_70B-Meta_AI-0467DF?style=for-the-badge&logo=meta&logoColor=white"/>
-  <img src="https://img.shields.io/badge/PostgreSQL-Database-4169E1?style=for-the-badge&logo=postgresql&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Streamlit-UI-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python"/>
+  <img src="https://img.shields.io/badge/LangGraph-Agent_Workflow-FF6B35?style=for-the-badge" alt="LangGraph"/>
+  <img src="https://img.shields.io/badge/Streamlit-Web_UI-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white" alt="Streamlit"/>
+  <img src="https://img.shields.io/badge/PostgreSQL-Persistence-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL"/>
+  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="MIT License"/>
 </p>
 
-<p align="center">
-  <img src="https://img.shields.io/github/stars/dheeraj116232/multi-agent-travel-ai?style=social"/>
-  <img src="https://img.shields.io/github/forks/dheeraj116232/multi-agent-travel-ai?style=social"/>
-  <img src="https://img.shields.io/github/issues/dheeraj116232/multi-agent-travel-ai"/>
-  <img src="https://img.shields.io/badge/license-MIT-green"/>
-</p>
-
-<br/>
-
-> **Four specialized AI agents. One perfect trip.**  
-> A production-grade multi-agent system that searches flights, finds hotels, builds day-by-day itineraries, and delivers a complete travel plan — all powered by LangGraph + Llama 3.3 70B.
-
+[![Tests](https://img.shields.io/badge/tests-pytest-blue)](#testing)
+[![Docker](https://img.shields.io/badge/docker-ready-blue)](#docker)
+[![Status](https://img.shields.io/badge/status-portfolio_ready-brightgreen)](#production-readiness)
 
 </div>
 
 ---
 
-## 📸 Preview
+## Overview
 
-> _A premium dark-themed Streamlit interface with glassmorphism layouts, real-time agent status, and PDF export._
+This project turns a natural-language travel request into a complete travel plan. A sequential LangGraph workflow runs specialized agents for flight search, hotel search, itinerary creation, and final trip summarization. The Streamlit frontend adds a polished planner UI, themed navigation, trip history, feedback collection, and downloadable Markdown/PDF travel plans.
 
----
+The code supports both a web interface and a CLI entrypoint, with PostgreSQL used for LangGraph checkpoints and saved trip history when `DATABASE_URL` is configured.
 
-## 🧠 How It Works
+## Features
 
-The system uses a **sequential LangGraph state graph** where each agent enriches a shared state before handing off to the next:
+| Feature | What it does |
+|---|---|
+| Multi-agent workflow | Runs flight, hotel, itinerary, and final-summary agents in sequence. |
+| Streamlit planner UI | Provides Home, AI Trip Planner, Famous Destinations, Saved History, and Feedback sections. |
+| Flight search | Uses AviationStack to fetch live flight-related data. |
+| Hotel/travel search | Uses Tavily web search for hotel and travel context. |
+| LLM itinerary generation | Uses Groq/Llama 3.3 70B by default, with OpenAI fallback when configured. |
+| PostgreSQL persistence | Enables LangGraph checkpoints, saved trips, and feedback storage. |
+| Downloadable plans | Auto-saves generated plans and supports Markdown and PDF downloads. |
+| Rate limiting | Limits trip generation per user/session to control API usage. |
+| Docker support | Includes Dockerfile and docker-compose profiles for development and production-style runs. |
+
+## Architecture
 
 ```mermaid
 graph TD
-    Start([🚀 User Prompt]) --> FA[✈️ Flight Search Agent]
-    FA --> HA[🏨 Hotel Search Agent]
-    HA --> IA[🗓️ Itinerary Builder Agent]
-    IA --> SA[🧠 Trip Summary Agent]
-    SA --> PG[(🐘 PostgreSQL Memory)]
-    PG --> End([📦 Final Travel Plan])
+    A[User request] --> B[Flight Agent]
+    B --> C[Hotel Agent]
+    C --> D[Itinerary Agent]
+    D --> E[Final Summary Agent]
+    E --> F[Streamlit Results]
+    F --> G[Markdown/PDF Download]
+    F --> H[(PostgreSQL saved trips)]
 
-    classDef default fill:#0e1623,stroke:#1e2e44,color:#e2f0fd,font-family:Inter;
-    classDef agent fill:#0b1424,stroke:#4ea8f0,color:#ffffff,stroke-width:2px;
-    class FA,HA,IA,SA agent;
+    I[(PostgreSQL checkpointing)] -. optional .- B
+    I -. optional .- C
+    I -. optional .- D
+    I -. optional .- E
 ```
 
-| Agent | Role |
+The agent workflow is defined in [main.py](main.py). The Streamlit frontend is implemented in [frontend.py](frontend.py), with smaller UI helpers in [ui/](ui/). External service integrations live in [tools/](tools/).
+
+## Tech Stack
+
+| Layer | Tools |
 |---|---|
-| ✈️ **Flight Search Agent** | Queries AviationStack API for live flight options |
-| 🏨 **Hotel Search Agent** | Finds top hotel deals via Tavily real-time search |
-| 🗓️ **Itinerary Builder Agent** | Generates structured day-by-day schedules |
-| 🧠 **Trip Summary Agent** | Compiles everything into a clean markdown travel guide |
-| 🐘 **PostgreSQL Memory** | Stores conversation checkpoints & session history |
+| Agent orchestration | LangGraph, LangChain |
+| LLM providers | Groq `llama-3.3-70b-versatile`, optional OpenAI fallback |
+| Frontend | Streamlit |
+| Search APIs | Tavily, AviationStack |
+| Persistence | PostgreSQL, LangGraph Postgres checkpointer |
+| Export | Markdown files, FPDF2-generated PDFs |
+| DevOps | Docker, docker-compose, pytest |
 
----
+## Project Structure
 
-## ✨ Features
-
-| Feature | Description |
-|---|---|
-| 🤖 **Multi-Agent Architecture** | 4 specialized LangGraph agents working in sequence |
-| 🧠 **Long-Term Memory** | PostgreSQL-backed session checkpoints across conversations |
-| 📄 **PDF Export** | Beautiful, printable travel plans generated on the fly |
-| 🎨 **Theme Toggle** | Premium Dark, Elegant Light & Charcoal Grayscale modes |
-| ⚡ **Auto User ID** | Session-level ID generation that scales automatically |
-| 🌐 **Dual Launch Mode** | Run via Terminal CLI or interactive Streamlit web app |
-| 🌍 **Famous Destinations** | Pre-built destination cards that auto-fill the planner |
-| 🕐 **Trip History** | Browse and revisit all previously generated trip plans |
-
----
-
-## 🛠️ Tech Stack
-
-```
-LangGraph        →  Multi-agent orchestration & state graph
-LangChain        →  Agent tooling & LLM chaining
-Groq Cloud       →  Ultra-fast LLM inference
-Llama 3.3 70B    →  Core language model (Meta AI)
-PostgreSQL       →  Long-term memory & session storage
-Streamlit        →  Frontend web interface
-Tavily API       →  Real-time web search for hotels & travel info
-AviationStack    →  Live flight data
-FPDF2            →  PDF itinerary generation
+```text
+multi-agent-travel-ai/
+├── main.py                    # LangGraph workflow and CLI entrypoint
+├── frontend.py                # Streamlit web application
+├── footer.py                  # Shared footer UI
+├── config/
+│   ├── settings.py            # Environment-driven settings
+│   └── rate_limiter.py        # Per-user/session API call limiting
+├── tools/
+│   ├── flight_tool.py         # AviationStack flight search
+│   └── tavily_tool.py         # Tavily hotel/travel search
+├── ui/
+│   ├── sidebar.py             # Sidebar navigation and theme controls
+│   ├── styles.py              # Shared UI styles
+│   └── sections_*.py          # Modular UI section placeholders/helpers
+├── tests/
+│   └── test_core_functions.py # Rate limiter tests
+├── images/                    # Destination image assets
+├── Dockerfile                 # Container image for the Streamlit app
+├── docker-compose.yml         # Development and production profiles
+├── requirements.txt           # Python dependencies
+├── .env.example               # Environment variable template
+└── README.md
 ```
 
----
+Generated folders such as `travel_plans/`, `logs/`, `__pycache__/`, virtual environments, and `.env` are intentionally ignored by Git.
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- Python 3.9+
-- PostgreSQL installed and running
-- API keys for Groq, Tavily, and AviationStack
+- Python 3.11 recommended
+- PostgreSQL 14+ recommended for persistence
+- API keys for at least one LLM provider:
+  - Groq: `GROQ_API_KEY`
+  - Optional fallback: `OPENAI_API_KEY`
+- Tavily API key for hotel/travel web search
+- AviationStack API key for flight lookup
 
 ### 1. Clone the Repository
 
@@ -108,152 +120,181 @@ git clone https://github.com/dheeraj116232/multi-agent-travel-ai.git
 cd multi-agent-travel-ai
 ```
 
-### 2. Create & Activate Virtual Environment
+### 2. Create a Virtual Environment
 
 ```bash
-# Create environment
 python -m venv langgraph_env3
+```
 
-# Windows
+Windows:
+
+```bash
 langgraph_env3\Scripts\activate
+```
 
-# macOS / Linux
+macOS/Linux:
+
+```bash
 source langgraph_env3/bin/activate
 ```
 
 ### 3. Install Dependencies
 
 ```bash
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Or install manually:
+### 4. Configure Environment Variables
+
+Copy the template and fill in your values:
+
+Windows:
 
 ```bash
-pip install langgraph langchain langchain-groq langchain-community langchain-tavily \
-            psycopg[binary] psycopg_pool python-dotenv requests streamlit fpdf2
-pip install -U "psycopg[binary,pool]" langgraph-checkpoint-postgres
+copy .env.example .env
 ```
 
-### 4. Set Up PostgreSQL
+macOS/Linux:
 
-Open **pgAdmin 4** or `psql` and run:
+```bash
+cp .env.example .env
+```
+
+Required for full functionality:
+
+```env
+GROQ_API_KEY=your_groq_api_key
+TAVILY_API_KEY=your_tavily_api_key
+AVIATIONSTACK_API_KEY=your_aviationstack_api_key
+DATABASE_URL=postgresql://postgres:your_password@localhost:5432/langgraph_memory_demo
+```
+
+`OPENAI_API_KEY` is optional and is used only when Groq is not configured.
+
+### 5. Set Up PostgreSQL
+
+Create the database used by `DATABASE_URL`:
 
 ```sql
 CREATE DATABASE langgraph_memory_demo;
 ```
 
-### 5. Configure Environment Variables
+The app can start without `DATABASE_URL`, but persistent checkpoints, saved trip history, and feedback storage require PostgreSQL.
 
-Create a `.env` file in the root directory:
+## Running the App
 
-```env
-# LLM
-GROQ_API_KEY=your_groq_api_key
-
-# Search & Flights
-TAVILY_API_KEY=your_tavily_api_key
-AVIATIONSTACK_API_KEY=your_aviationstack_api_key
-
-# Database
-DATABASE_URL=postgresql://postgres:<your_password>@localhost:5432/langgraph_memory_demo
-```
-
-> **Get your API keys here:**
-> - Groq → [console.groq.com](https://console.groq.com)
-> - Tavily → [tavily.com](https://tavily.com)
-> - AviationStack → [aviationstack.com](https://aviationstack.com)
-
----
-
-## 💻 Running the App
-
-### Option A — Streamlit Web Interface (Recommended)
+### Streamlit Web App
 
 ```bash
 streamlit run frontend.py
 ```
 
-Open **`http://localhost:8501`** in your browser.
+Open `http://localhost:8501`.
 
-### Option B — Terminal / CLI Mode
+### CLI Mode
 
 ```bash
 python main.py
 ```
 
----
+## Docker
 
-## 📝 Example Prompts
+Development profile:
 
-Try these to get started:
+```bash
+docker compose --profile development up --build
+```
 
+Production-style profile:
+
+```bash
+docker compose --profile production up --build
 ```
-Plan a complete 7-day Japan trip including flights, hotels, and sightseeing under ₹2 lakhs.
+
+The compose file reads environment variables from your shell or `.env` file and exposes the Streamlit app on port `8501` by default.
+
+## Example Prompts
+
+```text
+Plan a complete 7-day Japan trip including flights, hotels, and sightseeing under Rs. 2 lakhs.
 ```
-```
+
+```text
 Plan a 5-day Paris trip for 2 people with a mid-range budget.
 ```
-```
+
+```text
 Plan a complete 6-day Kashmir trip covering Srinagar houseboats and Gulmarg snow resorts.
 ```
 
----
+## Testing
 
-## 📁 Project Structure
-
-```
-multi-agent-travel-ai/
-│
-├── frontend.py           # Streamlit web interface
-├── main.py               # CLI entry point
-├── agents/
-│   ├── flight_agent.py   # Flight Search Agent
-│   ├── hotel_agent.py    # Hotel Search Agent
-│   ├── itinerary_agent.py# Itinerary Builder Agent
-│   └── summary_agent.py  # Trip Summary Agent
-├── memory/
-│   └── postgres_memory.py# PostgreSQL checkpointing
-├── footer.py             # Footer component
-├── requirements.txt
-├── .env.example
-└── README.md
-```
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Here's how:
+Run the unit tests:
 
 ```bash
-# 1. Fork the project
-# 2. Create your feature branch
-git checkout -b feature/AmazingFeature
-
-# 3. Commit your changes
-git commit -m "Add AmazingFeature"
-
-# 4. Push to the branch
-git push origin feature/AmazingFeature
-
-# 5. Open a Pull Request
+pytest -q
 ```
 
-Check the [issues page](https://github.com/dheeraj116232/multi-agent-travel-ai/issues) for open tasks.
+Check Python syntax for the main app files:
 
----
+```bash
+python -m py_compile main.py frontend.py config/rate_limiter.py tools/flight_tool.py tools/tavily_tool.py
+```
 
-## 📄 License
+## Troubleshooting
 
-Distributed under the MIT License. See `LICENSE` for more information.
+| Problem | Fix |
+|---|---|
+| `LLM provider is not configured` | Set `GROQ_API_KEY` or `OPENAI_API_KEY` in `.env`. |
+| No saved trip history | Set `DATABASE_URL` and ensure PostgreSQL is running. |
+| Tavily search errors | Confirm `TAVILY_API_KEY` is valid. The app can continue with fallback text, but hotel quality will be lower. |
+| Flight results missing | Confirm `AVIATIONSTACK_API_KEY` is valid and the API quota is available. |
+| PDF generation fails | Ensure `fpdf2` is installed from `requirements.txt`. |
+| Docker healthcheck fails | Wait for Streamlit startup, then check `docker compose logs app` or `docker compose logs dev`. |
 
----
+## Production Readiness
 
-<div align="center">
+This repository is suitable as a strong portfolio or prototype-to-production foundation. It includes:
 
-**Built with ❤️ using LangGraph, Groq & Streamlit**
+- Clear agent workflow boundaries
+- Environment-based configuration
+- PostgreSQL-backed persistence
+- Docker support
+- Basic tests
+- Rate limiting
+- Secret-safe `.gitignore`
+- Download/export workflows
 
-⭐ Star this repo if you found it useful!
+Before deploying to real users, add:
 
-</div>
+- Authentication and user-owned trip records
+- CI/CD pipeline with automated tests
+- Structured logging and monitoring
+- Stronger error handling around third-party APIs
+- Secrets management through a cloud provider or deployment platform
+- A real UI screenshot or demo video in this README
+
+## Security Notes
+
+- Never commit `.env` or real API keys.
+- Use `.env.example` only for placeholders.
+- Rotate API keys if they were ever committed in old local history.
+- Treat generated travel plans as user data; avoid committing `travel_plans/`.
+
+## Contributing
+
+Contributions are welcome.
+
+```bash
+git checkout -b feature/your-feature
+git commit -m "Add your feature"
+git push origin feature/your-feature
+```
+
+Then open a pull request on GitHub.
+
+## License
+
+This project is released under the MIT License. See [LICENSE](LICENSE) for details.
+
