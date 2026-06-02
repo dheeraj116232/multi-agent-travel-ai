@@ -1,0 +1,80 @@
+﻿# ========================
+# 🔐 Environment & Secrets
+# ========================
+.env
+.env.*
+*.env
+!.env.example
+
+# ========================
+# 🐍 Python
+# ========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+
+# ========================
+# 📦 Virtual Environments
+# ========================
+venv/
+env/
+.venv/
+langgraph_env3/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# ========================
+# 🧪 Testing & Coverage
+# ========================
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+*.cover
+
+# ========================
+# 📝 Logs & Temp Files
+# ========================
+logs/
+*.log
+*.tmp
+*.temp
+config/temp-config/
+
+# ========================
+# 🗂️ IDE & Editor
+# ========================
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ========================
+# 📸 Images (optional: keep if you commit assets)
+# ========================
+# images/
+
+# ========================
+# 🧳 Travel Plans (user data / generated)
+# ========================
+travel_plans/
+
+# ========================
+# 🧰 OS files
+# ========================
+.DS_Store
+Thumbs.db
+
+# ========================
+# 🧊 Streamlit / caches
+# ========================
+.streamlit/
+.streamlit_cache/
+
