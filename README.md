@@ -15,6 +15,8 @@ An AI-powered travel planner that combines a LangGraph agent pipeline with a Str
 [![Tests](https://img.shields.io/badge/tests-pytest-blue)](#testing)
 [![Docker](https://img.shields.io/badge/docker-ready-blue)](#docker)
 [![Status](https://img.shields.io/badge/status-portfolio_ready-brightgreen)](#production-readiness)
+[![Last Commit](https://img.shields.io/github/last-commit/dheeraj116232/multi-agent-travel-ai)](https://github.com/dheeraj116232/multi-agent-travel-ai/commits/main)
+[![GitHub Stars](https://img.shields.io/github/stars/dheeraj116232/multi-agent-travel-ai?style=social)](https://github.com/dheeraj116232/multi-agent-travel-ai/stargazers)
 
 </div>
 
@@ -25,6 +27,10 @@ An AI-powered travel planner that combines a LangGraph agent pipeline with a Str
 This project turns a natural-language travel request into a complete travel plan. A sequential LangGraph workflow runs specialized agents for flight search, hotel search, itinerary creation, and final trip summarization. The Streamlit frontend adds a polished planner UI, themed navigation, trip history, feedback collection, and downloadable Markdown/PDF travel plans.
 
 The code supports both a web interface and a CLI entrypoint, with PostgreSQL used for LangGraph checkpoints and saved trip history when `DATABASE_URL` is configured.
+
+> 📸 **Screenshots coming soon** — a demo video and UI screenshots will be added in the next update.
+
+---
 
 ## Features
 
@@ -39,6 +45,8 @@ The code supports both a web interface and a CLI entrypoint, with PostgreSQL use
 | Downloadable plans | Auto-saves generated plans and supports Markdown and PDF downloads. |
 | Rate limiting | Limits trip generation per user/session to control API usage. |
 | Docker support | Includes Dockerfile and docker-compose profiles for development and production-style runs. |
+
+---
 
 ## Architecture
 
@@ -58,7 +66,9 @@ graph TD
     I -. optional .- E
 ```
 
-The agent workflow is defined in [main.py](main.py). The Streamlit frontend is implemented in [frontend.py](frontend.py), with smaller UI helpers in [ui/](ui/). External service integrations live in [tools/](tools/).
+The agent workflow is defined in [main.py](main.py). The Streamlit frontend is implemented in [frontend.py](frontend.py), with smaller UI helpers in [ui/](ui/). Core business logic lives in [core/](core/). External service integrations live in [tools/](tools/).
+
+---
 
 ## Tech Stack
 
@@ -72,6 +82,8 @@ The agent workflow is defined in [main.py](main.py). The Streamlit frontend is i
 | Export | Markdown files, FPDF2-generated PDFs |
 | DevOps | Docker, docker-compose, pytest |
 
+---
+
 ## Project Structure
 
 ```text
@@ -82,6 +94,7 @@ multi-agent-travel-ai/
 ├── config/
 │   ├── settings.py            # Environment-driven settings
 │   └── rate_limiter.py        # Per-user/session API call limiting
+├── core/                      # Core agent logic and workflow helpers
 ├── tools/
 │   ├── flight_tool.py         # AviationStack flight search
 │   └── tavily_tool.py         # Tavily hotel/travel search
@@ -90,16 +103,19 @@ multi-agent-travel-ai/
 │   ├── styles.py              # Shared UI styles
 │   └── sections_*.py          # Modular UI section placeholders/helpers
 ├── tests/
-│   └── test_core_functions.py # Rate limiter tests
+│   └── test_core_functions.py # Rate limiter and core tests
 ├── images/                    # Destination image assets
 ├── Dockerfile                 # Container image for the Streamlit app
 ├── docker-compose.yml         # Development and production profiles
 ├── requirements.txt           # Python dependencies
+├── TODO.md                    # Planned improvements and known gaps
 ├── .env.example               # Environment variable template
 └── README.md
 ```
 
 Generated folders such as `travel_plans/`, `logs/`, `__pycache__/`, virtual environments, and `.env` are intentionally ignored by Git.
+
+---
 
 ## Getting Started
 
@@ -182,6 +198,8 @@ CREATE DATABASE langgraph_memory_demo;
 
 The app can start without `DATABASE_URL`, but persistent checkpoints, saved trip history, and feedback storage require PostgreSQL.
 
+---
+
 ## Running the App
 
 ### Streamlit Web App
@@ -197,6 +215,8 @@ Open `http://localhost:8501`.
 ```bash
 python main.py
 ```
+
+---
 
 ## Docker
 
@@ -214,10 +234,12 @@ docker compose --profile production up --build
 
 The compose file reads environment variables from your shell or `.env` file and exposes the Streamlit app on port `8501` by default.
 
+---
+
 ## Example Prompts
 
 ```text
-Plan a complete 7-day Japan trip including flights, hotels, and sightseeing under Rs. 2 lakhs.
+Plan a complete 7-day Japan trip including flights, hotels, and sightseeing under Rs. 2 lakhs (~$2,400 USD).
 ```
 
 ```text
@@ -227,6 +249,8 @@ Plan a 5-day Paris trip for 2 people with a mid-range budget.
 ```text
 Plan a complete 6-day Kashmir trip covering Srinagar houseboats and Gulmarg snow resorts.
 ```
+
+---
 
 ## Testing
 
@@ -242,6 +266,8 @@ Check Python syntax for the main app files:
 python -m py_compile main.py frontend.py config/rate_limiter.py tools/flight_tool.py tools/tavily_tool.py
 ```
 
+---
+
 ## Troubleshooting
 
 | Problem | Fix |
@@ -251,7 +277,10 @@ python -m py_compile main.py frontend.py config/rate_limiter.py tools/flight_too
 | Tavily search errors | Confirm `TAVILY_API_KEY` is valid. The app can continue with fallback text, but hotel quality will be lower. |
 | Flight results missing | Confirm `AVIATIONSTACK_API_KEY` is valid and the API quota is available. |
 | PDF generation fails | Ensure `fpdf2` is installed from `requirements.txt`. |
+| Import errors from `core/` | Ensure `core/__init__.py` exists and dependencies are installed. |
 | Docker healthcheck fails | Wait for Streamlit startup, then check `docker compose logs app` or `docker compose logs dev`. |
+
+---
 
 ## Production Readiness
 
@@ -273,7 +302,9 @@ Before deploying to real users, add:
 - Structured logging and monitoring
 - Stronger error handling around third-party APIs
 - Secrets management through a cloud provider or deployment platform
-- A real UI screenshot or demo video in this README
+- Screenshots or a demo video in this README
+
+---
 
 ## Security Notes
 
@@ -281,6 +312,8 @@ Before deploying to real users, add:
 - Use `.env.example` only for placeholders.
 - Rotate API keys if they were ever committed in old local history.
 - Treat generated travel plans as user data; avoid committing `travel_plans/`.
+
+---
 
 ## Contributing
 
@@ -294,7 +327,8 @@ git push origin feature/your-feature
 
 Then open a pull request on GitHub.
 
+---
+
 ## License
 
 This project is released under the MIT License. See [LICENSE](LICENSE) for details.
-
