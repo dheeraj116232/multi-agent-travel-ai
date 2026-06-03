@@ -17,8 +17,17 @@ An AI-powered travel planner that combines a LangGraph agent pipeline with a Str
 [![Status](https://img.shields.io/badge/status-portfolio_ready-brightgreen)](#production-readiness)
 [![Last Commit](https://img.shields.io/github/last-commit/dheeraj116232/multi-agent-travel-ai)](https://github.com/dheeraj116232/multi-agent-travel-ai/commits/main)
 [![GitHub Stars](https://img.shields.io/github/stars/dheeraj116232/multi-agent-travel-ai?style=social)](https://github.com/dheeraj116232/multi-agent-travel-ai/stargazers)
+[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Render-46E3B7?style=for-the-badge)](https://multi-agent-travel-ai.onrender.com)
 
 </div>
+
+---
+
+## 🚀 Live Demo
+
+**Try it now → [https://multi-agent-travel-ai.onrender.com](https://multi-agent-travel-ai.onrender.com)**
+
+> ⚠️ Hosted on Render free tier — the app may take **30–60 seconds to wake up** on first load. Just wait a moment and refresh if needed.
 
 ---
 
@@ -28,7 +37,8 @@ This project turns a natural-language travel request into a complete travel plan
 
 The code supports both a web interface and a CLI entrypoint, with PostgreSQL used for LangGraph checkpoints and saved trip history when `DATABASE_URL` is configured.
 
-> 📸 **Screenshots coming soon** — a demo video and UI screenshots will be added in the next update.
+> 🌐 **Live app:** [https://multi-agent-travel-ai.onrender.com](https://multi-agent-travel-ai.onrender.com) — Try it directly in your browser, no setup needed.
+> 📸 **Screenshots/demo video** — will be added in the next update.
 
 ---
 
