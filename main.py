@@ -183,7 +183,8 @@ else:
 
 
 
-if __name__ == "__main__":
+if __name__ == "__main__" and os.getenv("RUN_TRAVEL_CLI") == "1":
+    # CLI runner (disabled by default; avoids blocking Streamlit)
     config = {
         "configurable": {
             "thread_id": "user_aarohi"
@@ -191,6 +192,8 @@ if __name__ == "__main__":
     }
 
     user_input = input("Enter travel request: ")
+
+
 
     result = app.invoke(
         {

@@ -17,9 +17,56 @@ div[data-testid="stButton"] > button { background: linear-gradient(135deg, #1a6b
         unsafe_allow_html=True,
     )
 
+    # ──────────────────────────────────────────────────────────────────────────
+    # Responsive utilities (used across the app)
+    # ──────────────────────────────────────────────────────────────────────────
+    # Streamlit renders inside a nested DOM; the rules below are scoped to
+    # avoid breaking layout while preventing common mobile issues:
+    # - horizontal scrolling
+    # - images overflowing their containers
+    # - long text breaking readability
+
+    st.markdown(
+        """
+<style>
+html, body { overflow-x: hidden !important; }
+img { max-width: 100% !important; height: auto !important; }
+
+/* Safer text wrapping to prevent overflow in cards/results */
+.bb-wrap { overflow-wrap: anywhere; word-break: break-word; white-space: normal; }
+.bb-text-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Card/stack helpers */
+.bb-card {
+  background: rgba(14, 22, 35, 0.75) !important;
+  border: 1px solid rgba(30, 46, 68, 1) !important;
+  border-radius: 14px !important;
+  padding: 1rem !important;
+}
+
+.bb-stack { display: flex; flex-direction: column; gap: 0.75rem; }
+
+/* Touch-friendly buttons */
+.bb-touch-btn div[data-testid="baseButton-container"] > button,
+.bb-touch-btn div[data-testid="stButton"] > button {
+  min-height: 44px;
+}
+
+/* Mobile tweaks */
+@media (max-width: 768px) {
+  /* Make tab panels and markdown areas wrap */
+  [data-testid="stMarkdown"], .stMarkdown { max-width: 100% !important; }
+  .bb-card { padding: 0.9rem !important; }
+}
+</style>
+""",
+        unsafe_allow_html=True,
+    )
+
     # Apply selected theme overrides (keep minimal to avoid breaking layout)
     theme_css = ""
     if theme == "☀️ Elegant Light":
+
         theme_css = """
 .stApp { background-color: #f5f7fa !important; color: #1e293b !important; }
 section[data-testid="stSidebar"] { background: #f8fafc !important; border-right: 1px solid #e2e8f0 !important; }

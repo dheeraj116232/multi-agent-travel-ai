@@ -233,8 +233,22 @@ class TravelPlanPDF(FPDF):
         self.cell(0, 10, f'Page {self.page_no()}/{{nb}}', border=False, align='C')
 
 def clean_text_for_pdf(text):
-    if not text:
+    """FPDF-safe text.
+
+    FPDF (with built-in fonts) typically assumes latin-1-ish encodings.
+    We aggressively strip/replace common emoji/symbols and force ASCII-safe output.
+    """
+    if text is None:
         return ""
+
+    # Ensure we always operate on a string
+    if not isinstance(text, str):
+        text = str(text)
+
+    # Fast path: already empty/whitespace
+    if text.strip() == "":
+        return ""
+
     replacements = {
         "₹": "Rs.",
         "✈️": "",
@@ -277,17 +291,31 @@ def clean_text_for_pdf(text):
         "’": "'",
         "‘": "'",
         "”": '"',
-        "“": '"'
+        "“": '"',
     }
+
     for orig, rep in replacements.items():
         text = text.replace(orig, rep)
-    cleaned = []
-    for char in text:
-        if ord(char) < 256:
-            cleaned.append(char)
+
+    # FPDF built-in fonts are not unicode-safe. Replace anything outside latin-1.
+    cleaned_chars = []
+    for ch in text:
+        code = ord(ch)
+        if code < 256:
+            cleaned_chars.append(ch)
         else:
-            cleaned.append("?")
-    return "".join(cleaned)
+            cleaned_chars.append("?")
+
+    cleaned = "".join(cleaned_chars)
+
+    # Make sure there are no stray non-encodable characters.
+    # If python fails to encode to latin-1, replace offending chars.
+    try:
+        cleaned.encode("latin-1")
+        return cleaned
+    except UnicodeEncodeError:
+        return cleaned.encode("latin-1", errors="replace").decode("latin-1")
+
 
 def generate_pdf_data(collected, thread_id):
     pdf = TravelPlanPDF(orientation="P", unit="mm", format="A4")
@@ -319,8 +347,10 @@ def generate_pdf_data(collected, thread_id):
             return
         pdf.set_font('helvetica', 'B', 13)
         pdf.set_text_color(26, 107, 191) # Primary accent
-        pdf.cell(0, 10, title, new_x="LMARGIN", new_y="NEXT")
+        # FPDF version compatibility: some versions don't support new_x/new_y args.
+        pdf.cell(0, 10, title)
         pdf.ln(2)
+
         
         pdf.set_font('helvetica', '', 9.5)
         pdf.set_text_color(50, 50, 50)
@@ -2718,42 +2748,114 @@ elif st.session_state.active_section == "🤖 AI Trip Planner":
                         unsafe_allow_html=True)
             
             try:
-                for chunk in app.stream(
-                    {
-                        "messages": [HumanMessage(content=user_query)],
-                        "user_query": user_query,
-                        "flight_results": "",
-                        "hotel_results": "",
-                        "itinerary": "",
-                        "llm_calls": 0,
-                    },
-                    config=config,
-                    stream_mode="updates",
-                ):
-                    for node_name, state_update in chunk.items():
-                        icon, label = AGENT_META.get(node_name, ("🔧", node_name))
-                        
-                        with st.status(f"{icon}  {label}", state="complete", expanded=True):
+                # Real-time multi-agent loading UI
+                start_ts = datetime.now()
+                progress = st.progress(0)
+                percent_label = st.empty()
+                log_box = st.empty()  # keep status log visible
+
+                # Agent display order & percent mapping
+                agent_steps = [
+                    ("flight_agent", "✈️ Flight Agent"),
+                    ("hotel_agent", "🏨 Hotel Agent"),
+                    ("itinerary_agent", "🗺️ Itinerary Agent"),
+                    ("final_agent", "✨ Summary Agent"),
+                ]
+                step_to_percent = {
+                    "flight_agent": 25,
+                    "hotel_agent": 50,
+                    "itinerary_agent": 75,
+                    "final_agent": 100,
+                }
+
+                status_containers = {}
+                for agent_key, agent_display in agent_steps:
+                    with st.status(f"⌛ {agent_display}", state="running", expanded=True):
+                        st.write("")
+                    # create an empty placeholder for later update
+                    status_containers[agent_key] = st.empty()
+
+                # Track completion
+                completed = set()
+
+                try:
+                    for chunk in app.stream(
+                        {
+                            "messages": [HumanMessage(content=user_query)],
+                            "user_query": user_query,
+                            "flight_results": "",
+                            "hotel_results": "",
+                            "itinerary": "",
+                            "llm_calls": 0,
+                        },
+                        config=config,
+                        stream_mode="updates",
+                    ):
+                        for node_name, state_update in chunk.items():
+                            if node_name not in step_to_percent:
+                                continue
+
+                            icon, label = AGENT_META.get(node_name, ("🔧", node_name))
+                            display_label = dict(agent_steps).get(node_name, label)
+
+                            # Update status to complete
+                            status_text = {
+                                "flight_agent": "Searching Flights...",
+                                "hotel_agent": "Finding Hotels...",
+                                "itinerary_agent": "Building Day-by-Day Plan...",
+                                "final_agent": "Preparing Final Travel Plan...",
+                            }.get(node_name, "Running...")
+
+                            pct = step_to_percent[node_name]
+
+                            status_containers[node_name].status(
+                                f"✅ {display_label}", state="complete", expanded=True
+                            )
+
+                            # Write the agent-specific content and mark progress
                             if node_name == "flight_agent":
                                 text = state_update.get("flight_results", "")
                                 st.session_state.collected_results["flight_results"] = text
                                 st.markdown(text or "_No flight data returned._")
-                                
                             elif node_name == "hotel_agent":
                                 text = state_update.get("hotel_results", "")
                                 st.session_state.collected_results["hotel_results"] = text
                                 st.markdown(text or "_No hotel data returned._")
-                                
                             elif node_name == "itinerary_agent":
                                 text = state_update.get("itinerary", "")
                                 st.session_state.collected_results["itinerary"] = text
                                 st.markdown(text or "_No itinerary generated._")
-                                
                             elif node_name == "final_agent":
                                 msgs = state_update.get("messages", [])
                                 text = msgs[-1].content if msgs else ""
                                 st.session_state.collected_results["final_response"] = text
                                 st.markdown(text or "_No final response._")
+
+                            completed.add(node_name)
+                            progress.progress(pct / 100.0)
+                            percent_label.markdown(f"<div style='color:#7ba4f0;font-weight:700'>{pct}% complete</div>", unsafe_allow_html=True)
+
+                except Exception as e:
+                    failed_agent = None
+                    # best-effort: infer which agent key we were on
+                    for k in agent_steps:
+                        if k[0] in completed:
+                            continue
+                    st.error(f"❌ Agent workflow failed: {e}")
+                    st.stop()
+
+                total_time = datetime.now() - start_ts
+                percent_label.markdown(
+                    "<div style='color:#4ea8f0;font-weight:800'>✅ 100% complete</div>",
+                    unsafe_allow_html=True,
+                )
+                st.markdown(
+                    f"<div style='color:#94adc8;font-size:0.9rem;margin-top:0.5rem;'>⏱️ Total execution time: {str(total_time).split('.')[0]}</div>",
+                    unsafe_allow_html=True,
+                )
+
+                # end loading UI
+
                                 
                 # Save to PostgreSQL trip history database
                 collected = st.session_state.collected_results
