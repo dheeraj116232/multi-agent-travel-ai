@@ -25,7 +25,7 @@ An AI-powered travel planner that combines a LangGraph agent pipeline with a Str
 
 ## 🚀 Live Demo
 
-**Try it now → [https://multi-agent-travel-ai.onrender.com](https://multi-agent-travel-ai.onrender.com)**
+**Try it now → [https://tripnavigator-ai.onrender.com/](https://tripnavigator-ai.onrender.com/)**
 
 > ⚠️ Hosted on Render free tier — the app may take **30–60 seconds to wake up** on first load. Just wait a moment and refresh if needed.
 
@@ -37,7 +37,7 @@ This project turns a natural-language travel request into a complete travel plan
 
 The code supports both a web interface and a CLI entrypoint, with PostgreSQL used for LangGraph checkpoints and saved trip history when `DATABASE_URL` is configured.
 
-> 🌐 **Live app:** [https://multi-agent-travel-ai.onrender.com](https://multi-agent-travel-ai.onrender.com) — Try it directly in your browser, no setup needed.
+> 🌐 **Live app:** [https://tripnavigator-ai.onrender.com/](https://tripnavigator-ai.onrender.com/) — Try it directly in your browser, no setup needed.
 > 📸 **Screenshots/demo video** — will be added in the next update.
 
 ---
