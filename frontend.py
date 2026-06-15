@@ -2836,12 +2836,8 @@ elif st.session_state.active_section == "🤖 AI Trip Planner":
                             percent_label.markdown(f"<div style='color:#7ba4f0;font-weight:700'>{pct}% complete</div>", unsafe_allow_html=True)
 
                 except Exception as e:
-                    failed_agent = None
-                    # best-effort: infer which agent key we were on
-                    for k in agent_steps:
-                        if k[0] in completed:
-                            continue
                     st.error(f"❌ Agent workflow failed: {e}")
+                    st.session_state.collected_results = None
                     st.stop()
 
                 total_time = datetime.now() - start_ts

@@ -20,9 +20,12 @@ class ProductionExternalAPIError(Exception):
     Always carry a user-friendly message and enough context for logs.
     """
 
-    def __init__(self, message: str, *, context: ExternalErrorContext):
+    def __init__(self, message: str, *, context: ExternalErrorContext | dict):
         super().__init__(message)
-        self.context = context
+        if isinstance(context, dict):
+            self.context = ExternalErrorContext(**context)
+        else:
+            self.context = context
 
 
 class APITimeoutError(ProductionExternalAPIError):

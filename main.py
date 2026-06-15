@@ -39,6 +39,7 @@ except ModuleNotFoundError:
 
 from tools.tavily_tool import tavily_search
 from tools.flight_tool import search_flights
+from core.errors import ProductionExternalAPIError
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
@@ -71,7 +72,10 @@ class TravelState(TypedDict):
 # Flight Agent
 def flight_agent(state: TravelState):
     query = state["user_query"]
-    flight_data = search_flights(query)
+    try:
+        flight_data = search_flights(query)
+    except ProductionExternalAPIError:
+        flight_data = "⚠️ Live flight data is currently unavailable. Proceeding with estimated information."
     return {
         "flight_results": flight_data,
         "messages": [
@@ -83,8 +87,10 @@ def flight_agent(state: TravelState):
 # Hotel Agent
 def hotel_agent(state: TravelState):
     query = f"Best hotels for {state['user_query']}"
-    hotel_results = tavily_search(query)
-
+    try:
+        hotel_results = tavily_search(query)
+    except ProductionExternalAPIError:
+        hotel_results = "⚠️ No hotel results available. Proceeding without hotel recommendations."
     return {
         "hotel_results": hotel_results,
         "messages": [
@@ -109,15 +115,26 @@ def itinerary_agent(state: TravelState):
     """
 
     if llm is None:
-        raise RuntimeError("LLM provider is not configured. Set GROQ_API_KEY (langchain_groq) or OPENAI_API_KEY (langchain_openai).")
+        return {
+            "itinerary": "⚠️ Itinerary agent unavailable - LLM not configured.",
+            "messages": [AIMessage(content="Itinerary agent unavailable")],
+            "llm_calls": state.get("llm_calls", 0)
+        }
 
-    response = llm.invoke([
-        SystemMessage(
-            content="You are an expert travel planner"
-        ),
-        HumanMessage(content=prompt)
-    ])
-
+    try:
+        response = llm.invoke([
+            SystemMessage(
+                content="You are an expert travel planner"
+            ),
+            HumanMessage(content=prompt)
+        ])
+    except Exception as e:
+        response_content = f"⚠️ Failed to generate itinerary. Error: {e}"
+        return {
+            "itinerary": response_content,
+            "messages": [AIMessage(content=response_content)],
+            "llm_calls": state.get("llm_calls", 0)
+        }
 
     return {
         "itinerary": response.content,
@@ -142,13 +159,20 @@ def final_agent(state: TravelState):
     """
 
     if llm is None:
-        raise RuntimeError("LLM provider is not configured. Set GROQ_API_KEY (langchain_groq) or OPENAI_API_KEY (langchain_openai).")
+        return {
+            "messages": [AIMessage(content="Final agent unavailable - LLM not configured.")],
+            "llm_calls": state.get("llm_calls", 0)
+        }
 
-    response = llm.invoke([
-        HumanMessage(content=final_prompt)
-    ])
-
-
+    try:
+        response = llm.invoke([
+            HumanMessage(content=final_prompt)
+        ])
+    except Exception as e:
+        return {
+            "messages": [AIMessage(content=f"⚠️ Final response generation failed: {e}")],
+            "llm_calls": state.get("llm_calls", 0)
+        }
 
     return {
         "messages": [response],
@@ -170,16 +194,41 @@ graph.add_edge("itinerary_agent", "final_agent")
 graph.add_edge("final_agent", END)
 
 
-# Persistent connection so both CLI and Streamlit can share the compiled app
-# NOTE: avoid crashing import/startup when DATABASE_URL is missing.
-if DATABASE_URL:
-    _conn = psycopg.connect(DATABASE_URL, autocommit=True)
-    checkpointer = PostgresSaver(_conn)
-    checkpointer.setup()
-    app = graph.compile(checkpointer=checkpointer)
-else:
-    # Fallback: compile without persistent checkpoints
-    app = graph.compile()
+_conn = None
+checkpointer = None
+
+def test_and_reconnect():
+    """Test database connection and reconnect if needed. Returns True if DB is available."""
+    import psycopg
+    global _conn, checkpointer, app
+    if not DATABASE_URL:
+        return False
+    try:
+        if _conn is None:
+            raise psycopg.InterfaceError("No connection")
+        with _conn.cursor() as cur:
+            cur.execute("SELECT 1")
+        return True
+    except Exception:
+        try:
+            if _conn:
+                _conn.close()
+        except Exception:
+            pass
+        try:
+            _conn = psycopg.connect(DATABASE_URL, autocommit=True)
+            checkpointer = PostgresSaver(_conn)
+            checkpointer.setup()
+            # Always compile without checkpointer for Streamlit (uses session_state instead)
+            app = graph.compile()
+            return True
+        except Exception:
+            app = graph.compile()
+            return False
+
+# Compile without checkpointer for Streamlit (session state handles persistence)
+# This avoids stale connection issues in long-running Streamlit processes
+app = graph.compile()
 
 
 
